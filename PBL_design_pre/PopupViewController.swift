@@ -1,23 +1,19 @@
-//
-//  PopupController.swift
-//  PBL_design_pre
-//
-//  Created by KurohataY on 2019/12/11.
-//  Copyright © 2019 KurohataY. All rights reserved.
-//
-
 import UIKit
 
 class PopupViewController: UIViewController {
 
     //ラベル
-    @IBOutlet weak var playerNum: UILabel!
+    @IBOutlet weak var playerNum: UITextView!
+    
+    //プレイヤーの背番号を取得
+    var num = ""
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        playerNum.text = "背番号：\(num)\n身長：\n特徴：・・・・・"
     }
 
     override func didReceiveMemoryWarning() {
@@ -39,11 +35,9 @@ class PopupViewController: UIViewController {
         // タップした座標を取得する
         tapLocation = touch!.location(in: self.view)
 
-        let popUpView: UIView = self.view.viewWithTag(100)! as UIView
-
-        if !popUpView.frame.contains(tapLocation) {
-            self.dismiss(animated: false, completion: nil)
-        }
+        
     }
+    
+    
 
 }
