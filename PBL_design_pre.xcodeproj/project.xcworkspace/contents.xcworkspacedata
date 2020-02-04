@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:PBL_design_pre.xcodeproj">
+      location = "self:">
    </FileRef>
 </Workspace>

@@ -1,0 +1,6 @@
+framework module Pods_PBL_design_pre_PBL_design_preUITests {
+  umbrella header "Pods-PBL_design_pre-PBL_design_preUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}

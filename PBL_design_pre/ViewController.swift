@@ -14,13 +14,19 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var leftScore = 0
     var rightScore = 0
     var resultPlayData = ""
+//
+//    let playData:[String] = [
+//        "アウト",
+//        "ワンタッチ",
+//        "コートイン",
+//        "ネットタッチ"
+//    ]
     
-    let playData:[String] = [
-        "アウト",
-        "ワンタッチ",
-        "コートイン",
-        "ネットタッチ"
-    ]
+    //API取得構造体（json）
+    struct JsonData: Codable {
+        let data: String
+    }
+    
     //テーブルビューラベル
     @IBOutlet weak var detailsScore: UITableView!
     //点数ラベル
@@ -58,9 +64,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     //スコアの初期化（サーバーから習得？）
     var scoretext = "0 VS 0"
     
+//    // インスタンス変数（FireBase関連）
+//    var DBRef:DatabaseReference!
+    
+    //タイマーメソッド
+    var timer = Timer()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+                //APIの値を取得
+        self.get()
+//        self.add()
+        
+        //FireBase関連
+        //インスタンスを作成
+//        DBRef = Database.database().reference()
         //カウント用
         var i = 0
         //ナビゲーションバーのタイトル
@@ -82,6 +102,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let number = String(format: "%01d",value)
             leftbuttons[i].setTitle(number, for: .normal) // ボタンのタイトル
             leftbuttons[i].layer.cornerRadius = 5.0
+            leftbuttons[i].titleLabel?.baselineAdjustment = .alignCenters
             //ボタンタグを背番号に変更
             leftbuttons[i].tag = value
             i += 1
@@ -94,6 +115,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let number = String(format: "%01d",value)
             rightbuttons[i].setTitle(number, for: .normal) // ボタンのタイトル
             rightbuttons[i].layer.cornerRadius = 5.0
+            rightbuttons[i].titleLabel?.baselineAdjustment = .alignCenters
             //ボタンタグを背番号に変更
             rightbuttons[i].tag = value
             i += 1
@@ -107,7 +129,30 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         self.ResultScore.text = "\(leftScore) VS \(rightScore)";
         
+
+        
     }
+    
+    //FioreBase
+//    func add() {
+//        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true, block: { (timer) in
+//            let defaultPlace = self.DBRef.child("data")
+//            defaultPlace.observe(.value) { (snap: DataSnapshot) in self.resultPlayData = (snap.value! as AnyObject).description
+//            }
+//
+//            //ランダムなチームにた得点を入れる
+//            let number = Int.random(in: 1 ... 2)
+//
+//            if number == 1{
+//                self.leftScoreAdd()
+//            }else if number == 2{
+//                self.rightScoreAdd()
+//            }else{
+//                print("エラー")
+//            }
+//        })
+//        
+//    }
     
     
     // ポップアップを表示がタップされた時
@@ -127,7 +172,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     //左の得点に１点加える
-    @IBAction func leftScoreAdd(){
+    func leftScoreAdd(){
         leftScore += 1
         if rotationright == 0{
             rotationLeft = 1
@@ -144,7 +189,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
 
     //右の得点に１点加える
-    @IBAction func rightScoreAdd(){
+    func rightScoreAdd(){
         rightScore += 1
         if rotationLeft == 0{
             rotationright = 1
@@ -159,6 +204,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         left2.backgroundColor = .none
     }
     
+
     //得点を更新する
     func displayScore(){
         self.ResultScore.text = "\(leftScore) VS \(rightScore)";
@@ -175,11 +221,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             count += 1
         }
         var i = 0
-        print(leftnumbers)
         for value in leftnumbers {
             let number = String(format: "%01d",value)
             leftbuttons[i].setTitle(number, for: .normal) // ボタンのタイトル
             leftbuttons[i].layer.cornerRadius = 5.0
+            leftbuttons[i].titleLabel?.baselineAdjustment = .alignCenters
             //ボタンタグを背番号に変更
             leftbuttons[i].tag = value
             i += 1
@@ -204,6 +250,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let number = String(format: "%01d",value)
             rightbuttons[i].setTitle(number, for: .normal) // ボタンのタイトル
             rightbuttons[i].layer.cornerRadius = 5.0
+            rightbuttons[i].titleLabel?.baselineAdjustment = .alignCenters
             //ボタンタグを背番号に変更
             rightbuttons[i].tag = value
             i += 1
@@ -230,10 +277,56 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     //ジャッジ内容をランダムでテーブルビューに表示
     func resultPlayDataText(){
-        resultPlayData = playData[Int.random(in: 0 ... playData.count - 1)]
+//        resultPlayData = playData[Int.random(in: 0 ... playData.count - 1)]
         detailsScore.reloadData()
     }
+    
 
+    
+//    //APIの内容の取得
+    func get(){
+        //一定時間ごとに処理の実行
+        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true, block: { (timer) in
+            let jsonUrlString = "http://127.0.0.1:5000/api"
+            guard let url = URL(string: jsonUrlString) else {return}
 
+            URLSession.shared.dataTask(with: url) { (data, response, error) in
+                guard let data = data else {return}
+
+                do{
+                    let json = try JSONDecoder().decode(JsonData.self, from: data)
+                    print(json.data)
+                    if json.data == "change"{
+                        self.change()
+                        self.resultPlayData = json.data
+                    }else{
+                        self.resultPlayData = json.data
+                    }
+                } catch let jsonError{
+                    print("error", jsonError)
+                }
+            }.resume()
+            var number = 0
+            //ランダムなチームにた得点を入れる
+            if self.resultPlayData != ""{
+                number = Int.random(in: 1 ... 2)
+            }
+            if number == 0{
+                return
+            }else if number == 1{
+                self.leftScoreAdd()
+            }else if number == 2{
+                self.rightScoreAdd()
+            }else{
+                print("エラー")
+            }
+        })
+    }
+    
+//    //交代メソッド
+    func change(){
+        let changeNumberIndex = Int.random(in: 0 ... 5)
+        leftbuttons[changeNumberIndex].tag = Int.random(in: 1 ... 12)
+    }
 }
 
